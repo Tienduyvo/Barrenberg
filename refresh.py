@@ -6,6 +6,7 @@ import openpyxl
 import os
 import string
 from selenium import webdriver
+import time
 
 #dir = r'C:\Users\Tien'
 #os.chdir(dir)
@@ -25,18 +26,22 @@ rawdata_worksheet = rawdata_workbook.get_sheet_by_name('Sheet1')
 
 ################### global variables ####################
 ################### index - 2 ###########################
-i = 1805
+i = 0
 alphabet = list(string.ascii_uppercase)
 
-browser = webdriver.Firefox()
 
 
-while i <= 1805:
+
+while i <= 630:
 	try:
 
+		browser = webdriver.Firefox()
+		
 		i = i + 1 
 		
 		my_url = input_worksheet.cell(i,0).value
+
+		print(my_url)
 
 		finanzen_stockname = my_url.replace("http://www.finanzen.net/aktien/","")
 
@@ -66,7 +71,8 @@ while i <= 1805:
 			else:
 				isin = isin[20:32]
 
-			isin_index = 'A' + str(i-47)
+			isin_index = 'A' + str(i)
+
 			rawdata_worksheet[isin_index] = isin
 
 		except Exception as e:
@@ -76,7 +82,7 @@ while i <= 1805:
 		#grab name
 
 		try:
-			stock_index = 'B' + str(i-47)
+			stock_index = 'B' + str(i)
 			rawdata_worksheet[stock_index] = finanzen_stockname.replace("-Aktie","")
 
 		except Exception as e:
@@ -85,11 +91,11 @@ while i <= 1805:
 		#grab newest stock price
 
 		try:
-			stock = page_soup.findAll("div",{"class":"col-xs-5"})
+			stock = page_soup.findAll("div",{"col-xs-5 col-sm-4 text-sm-right text-nowrap"})
 
 			eur_price = stock[0].contents[0]
 
-			eur_price_index = 'C' + str(i-47)
+			eur_price_index = 'C' + str(i)
 			rawdata_worksheet[eur_price_index] = eur_price
 
 		except Exception as e:
@@ -114,7 +120,7 @@ while i <= 1805:
 			currency = currency[0].text.split('(in ')
 			currency = currency[1]
 			currency = currency.replace(')','')
-			currency_index = 'AW' + str(i-47)
+			currency_index = 'AW' + str(i)
 			rawdata_worksheet[currency_index] = currency
 		except Exception as e:
 			print ('no currency')
@@ -127,24 +133,25 @@ while i <= 1805:
 		try:
 			browser.get('http://www.boerse.de/historische-kurse/wertpapier/'+ isin + '_jahr,2009#jahr')
 			price2009 = browser.find_element_by_css_selector('table.table:nth-child(5) > tbody:nth-child(1) > tr:nth-child(3) > td:nth-child(5)').text
-			price2009index = 'AA' + str(i-47)
+			price2009index = 'AA' + str(i)
 			rawdata_worksheet[price2009index] = price2009
 		except Exception as e:
 			print('no Feb 2009 data')
 
-		
+		time.sleep(1)
 
 		#########################################      grab price Jan 2017 ######################################
 		try:
 			browser.get('http://www.boerse.de/historische-kurse/wertpapier/'+ isin + '_jahr,2017#jahr')
 			price2017 = browser.find_element_by_css_selector('table.table:nth-child(5) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(5)').text
-			price2017index = 'AX' + str(i-47)
+			price2017index = 'AX' + str(i)
 			rawdata_worksheet[price2017index] = price2017
 		except Exception as e:
 			print('no Jan 2017 data')
 
 		rawdata_workbook.save('rawdata.xlsx')
 
+		browser.close()
 
 	except Exception as e:
 		print('error')
